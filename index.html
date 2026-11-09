@@ -1,0 +1,838 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chismómetro</title>
+<meta name="description" content="Elige un chat exportado de WhatsApp y descubre quién es el más chismoso del grupo. Se lee solo en tu móvil: no se sube nada.">
+<meta property="og:title" content="Chismómetro: ¿quién es el más chismoso del grupo?">
+<meta property="og:description" content="Se lee solo en tu móvil. No se sube nada.">
+<meta name="theme-color" content="#1a0b2e">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icono-192.png">
+<link rel="apple-touch-icon" href="icono-192.png">
+<meta property="og:image" content="https://pangea24.github.io/chismometro/compartir.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}</style>
+</head>
+<body>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap">
+<style>
+/* Layout: una columna de móvil. Arriba el medidor de chisme como portada de revista; el informe son tarjetas apiladas como historias. */
+:root{
+  --tinta:#1a0b2e; --tinta-2:#2a1546; --tinta-3:#3a1f5e;
+  --rosa:#ff3d8b; --limon:#ffe14d; --menta:#3ee6b0;
+  --papel:#fff3f8; --gris:#c9b8dc;
+  --display:"Anton","Impact","Arial Narrow Bold",sans-serif;
+  --body:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{background:var(--tinta);color:var(--papel)}
+body{font-family:var(--body);font-size:16px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:18px 56px}
+.app{max-width:460px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+h1,h2,h3{text-wrap:balance;margin:0}
+p{margin:0}
+button,.boton{font:inherit;cursor:pointer;border:0;border-radius:999px;padding:16px 22px;font-weight:800;font-size:1.05rem;
+  display:flex;align-items:center;justify-content:center;gap:10px;text-decoration:none;width:100%;box-sizing:border-box}
+button:focus-visible,.boton:focus-visible,summary:focus-visible{outline:3px solid var(--limon);outline-offset:3px}
+.primario{background:var(--rosa);color:#fff;box-shadow:0 6px 0 #b0145a}
+.primario:active{transform:translateY(3px);box-shadow:0 3px 0 #b0145a}
+.secundario{background:transparent;color:var(--papel);border:2px solid var(--tinta-3)}
+.enlace{background:none;color:var(--gris);padding:8px;font-weight:600;font-size:.95rem;text-decoration:underline;width:auto;margin:0 auto}
+
+/* Portada */
+.marca{display:flex;align-items:center;justify-content:space-between}
+.logo{font-family:var(--display);font-size:1.5rem;letter-spacing:.04em;text-transform:uppercase}
+.logo b{color:var(--rosa);font-weight:400}
+.sello{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--menta);font-weight:800;border:2px solid var(--menta);border-radius:6px;padding:3px 7px;transform:rotate(-4deg)}
+.medidor{width:100%;max-width:100%;display:block}
+.titular{font-family:var(--display);font-weight:400;font-size:clamp(2.3rem,11vw,3.3rem);line-height:.98;text-transform:uppercase;letter-spacing:.01em}
+.titular em{font-style:normal;color:var(--limon)}
+.promesa{background:var(--menta);color:var(--tinta);border-radius:18px;padding:16px 18px;display:grid;grid-template-columns:auto 1fr;gap:4px 12px;align-items:start}
+.promesa .candado{font-size:1.9rem;grid-row:span 2;line-height:1}
+.promesa strong{font-size:1.15rem;font-weight:800;line-height:1.2}
+.promesa span{font-size:.95rem}
+.acciones{display:flex;flex-direction:column;gap:12px}
+#archivo{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.aviso{font-size:.9rem;color:var(--gris);text-align:center}
+.error{background:#4a1030;border:2px solid var(--rosa);border-radius:14px;padding:12px 14px;font-weight:600}
+.cargando{text-align:center;font-weight:800;color:var(--limon)}
+details{background:var(--tinta-2);border-radius:16px;padding:4px 16px}
+summary{font-weight:800;padding:12px 0;cursor:pointer}
+details ol{margin:0 0 14px;padding-left:22px;display:flex;flex-direction:column;gap:6px}
+details h3{font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:var(--limon);margin:6px 0 6px}
+.muestra{display:flex;flex-direction:column;gap:8px;align-items:center}
+.muestra .etiqueta{font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gris);font-weight:800}
+.muestra .tarjeta{transform:rotate(-2.5deg) scale(.86);transform-origin:top center;margin-bottom:-12%;pointer-events:none}
+
+/* Informe */
+.barra{display:flex;align-items:center;gap:12px;justify-content:space-between}
+.barra button{width:auto;padding:10px 16px;font-size:.95rem}
+.barra .chat{font-weight:800;color:var(--gris);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.tarjetas{display:flex;flex-direction:column;gap:28px}
+.bloque{display:flex;flex-direction:column;gap:10px}
+.tarjeta{--bg:var(--rosa);--fg:var(--tinta);--ac:var(--limon);
+  background:var(--bg);color:var(--fg);border-radius:24px;padding:22px 22px 18px;aspect-ratio:4/5;max-width:100%;box-sizing:border-box;
+  display:flex;flex-direction:column;gap:10px;position:relative;overflow:hidden;width:100%}
+.tarjeta::before{content:"";position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;
+  background:repeating-conic-gradient(var(--ac) 0 10deg,transparent 10deg 20deg);opacity:.55}
+.tarjeta>*{position:relative}
+.t-arriba{display:flex;align-items:center;gap:10px}
+.pegatina{font-size:2.6rem;line-height:1;filter:drop-shadow(0 3px 0 rgba(0,0,0,.18))}
+.kicker{font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;font-weight:800;line-height:1.2}
+.nombre{font-family:var(--display);font-weight:400;text-transform:uppercase;line-height:.95;font-size:clamp(2.6rem,13vw,4.2rem);overflow-wrap:anywhere;margin-top:auto}
+.cifra{font-family:var(--display);font-size:2.1rem;line-height:1;font-variant-numeric:tabular-nums}
+.cifra small{font-family:var(--body);font-size:1rem;font-weight:800;margin-left:4px}
+.dato{font-weight:600;font-size:1.02rem}
+.broma{font-weight:800;font-size:1.1rem;line-height:1.25}
+.pie{margin-top:auto;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;font-weight:800;opacity:.75;display:flex;justify-content:space-between;gap:8px}
+.pie span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.compartir{background:var(--tinta-2);color:var(--papel);padding:12px 18px;font-size:.98rem;border:2px solid var(--tinta-3)}
+.portadilla .nombre{font-size:clamp(2.3rem,11vw,3.4rem)}
+.cifras3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.cifras3 div{background:rgba(26,11,46,.12);border-radius:12px;padding:8px 10px}
+.cifras3 b{display:block;font-family:var(--display);font-weight:400;font-size:1.7rem;line-height:1.05;font-variant-numeric:tabular-nums}
+.cifras3 span{font-size:.75rem;font-weight:800}
+.ranking{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.ranking li{display:grid;grid-template-columns:2rem 1fr 3.2rem;gap:8px;align-items:baseline;border-bottom:2px dashed rgba(255,243,248,.18);padding-bottom:6px}
+.ranking .pos{font-family:var(--display);font-size:1.4rem}
+.ranking .quien{font-weight:800;min-width:0;overflow-wrap:anywhere;display:flex;flex-direction:column}
+.ranking .quien small{display:block;font-weight:600;font-size:.82rem;opacity:.8}
+.ranking .pts{text-align:right;font-family:var(--display);font-size:1.2rem;font-variant-numeric:tabular-nums}
+.tarjeta.rank,.tarjeta.nivel{aspect-ratio:auto;min-height:0}
+.abuela{margin-left:auto;width:92px;flex:none;margin-block:-8px -18px}
+.abuela svg{width:100%;height:auto;display:block}
+.medida{display:flex;flex-direction:column;gap:8px}
+.termo{display:flex;align-items:center}
+.bulbo{width:30px;height:30px;border-radius:50%;background:#3ee6b0;border:3px solid var(--fg);flex:none;margin-right:-8px;position:relative;z-index:1;box-sizing:border-box}
+.tubo{flex:1;height:18px;border-radius:999px;background:rgba(26,11,46,.18);border:3px solid var(--fg);overflow:hidden;display:block;box-sizing:border-box;min-width:0}
+.relleno{display:block;height:100%;width:var(--v);background:linear-gradient(90deg,#3ee6b0,#ffe14d 55%,#ff3d8b);border-radius:999px}
+.tubo.mini{height:10px;border-width:2px;margin-top:6px;flex:none;width:100%}
+.rango{font-weight:800;font-size:1.15rem;line-height:1.25}
+.final{display:flex;flex-direction:column;gap:12px}
+
+/* Compartir */
+.capa{position:fixed;inset:0;background:rgba(10,4,20,.88);z-index:20;display:flex;align-items:center;justify-content:center;
+  padding:calc(16px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.capa-caja{max-width:420px;width:100%;max-height:100%;overflow:auto;display:flex;flex-direction:column;gap:12px;background:var(--tinta-2);border-radius:20px;padding:16px;box-sizing:border-box}
+.capa-caja img{width:62%;margin:0 auto;display:block;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.capa-caja p{font-size:.92rem;color:var(--gris);text-align:center}
+.wa{background:#25d366;color:#0b2e17}
+.toast{font-weight:800;color:var(--menta);text-align:center;min-height:1.2em}
+@media (prefers-reduced-motion:no-preference){
+  .aguja{transition:transform 1.4s cubic-bezier(.3,1.6,.5,1)}
+  .bloque{animation:entra .5s both}
+  .relleno{animation:llena 1.3s .35s both cubic-bezier(.3,1.2,.5,1)}
+  @keyframes llena{from{width:0}}
+  @keyframes entra{from{transform:translateY(14px);opacity:.3}to{transform:none;opacity:1}}
+}
+</style>
+
+<div class="app">
+  <section id="inicio" class="app" aria-label="Inicio">
+    <div class="marca"><span class="logo">Chismó<b>metro</b></span><span class="sello">Solo en tu móvil</span></div>
+
+    <svg class="medidor" viewBox="0 0 320 178" role="img" aria-label="Medidor de chisme">
+      <path d="M30 160 A130 130 0 0 1 90 51" stroke="#3ee6b0" stroke-width="26" fill="none"/>
+      <path d="M93 49 A130 130 0 0 1 227 49" stroke="#ffe14d" stroke-width="26" fill="none"/>
+      <path d="M230 51 A130 130 0 0 1 290 160" stroke="#ff3d8b" stroke-width="26" fill="none"/>
+      <text x="38" y="120" fill="#fff3f8" font-family="Bricolage Grotesque, sans-serif" font-weight="800" font-size="11" letter-spacing="1.5">TRANQUI</text>
+      <text x="160" y="92" text-anchor="middle" fill="#fff3f8" font-family="Bricolage Grotesque, sans-serif" font-weight="800" font-size="11" letter-spacing="1.5">PICANTE</text>
+      <text x="282" y="120" text-anchor="end" fill="#fff3f8" font-family="Bricolage Grotesque, sans-serif" font-weight="800" font-size="11" letter-spacing="1.5">¡QUÉ FUERTE!</text>
+      <g class="aguja" id="aguja" style="transform-origin:160px 160px;transform:rotate(-80deg)">
+        <path d="M156 160 L160 52 L164 160 Z" fill="#fff3f8"/>
+      </g>
+      <circle cx="160" cy="160" r="13" fill="#fff3f8"/><circle cx="160" cy="160" r="5" fill="#1a0b2e"/>
+    </svg>
+
+    <h1 class="titular">¿Quién es el más <em>chismoso</em> del grupo?</h1>
+
+    <div class="promesa">
+      <span class="candado" aria-hidden="true">🔒</span>
+      <strong>Tu chat no sale de este teléfono.</strong>
+      <span>Se lee aquí mismo, no se sube a ningún sitio, no lo lee ninguna IA y se borra al cerrar.</span>
+    </div>
+
+    <div class="acciones">
+      <label class="boton primario" for="archivo">📂 Elegir el chat exportado</label>
+      <input id="archivo" type="file" accept=".txt,.zip,text/plain,application/zip,application/x-zip-compressed">
+      <button class="secundario" id="btn-ejemplo" type="button">Probar con un chat inventado</button>
+      <p id="estado" class="cargando" hidden></p>
+      <p id="error" class="error" role="alert" hidden></p>
+    </div>
+
+    <details>
+      <summary>¿Cómo saco el chat de WhatsApp?</summary>
+      <h3>Android</h3>
+      <ol>
+        <li>Abre el chat o el grupo.</li>
+        <li>Toca ⋮ (arriba a la derecha) → <b>Más</b> → <b>Exportar chat</b>.</li>
+        <li>Elige <b>Sin archivos</b> y guárdalo en <b>Archivos</b> o en Drive.</li>
+        <li>Vuelve aquí y toca «Elegir el chat exportado».</li>
+      </ol>
+      <h3>iPhone</h3>
+      <ol>
+        <li>Abre el chat y toca su nombre, arriba.</li>
+        <li>Baja hasta <b>Exportar chat</b> → <b>Sin archivos</b>.</li>
+        <li>Toca <b>Guardar en Archivos</b>.</li>
+        <li>Vuelve aquí y elige ese archivo (.zip o .txt).</li>
+      </ol>
+    </details>
+
+    <p class="aviso">Usa solo chats en los que estás tú y para reír con tu gente. No se guarda nada.</p>
+
+    <div class="muestra" aria-hidden="true">
+      <span class="etiqueta">Así sale (chat inventado)</span>
+      <div id="muestra"></div>
+    </div>
+  </section>
+
+  <section id="informe" class="app" aria-label="Informe" hidden>
+    <div class="barra">
+      <button class="secundario" id="btn-otro" type="button">← Otro chat</button>
+      <span class="chat" id="nombre-chat"></span>
+    </div>
+    <div class="tarjetas" id="tarjetas"></div>
+    <div class="final">
+      <button class="primario" id="btn-ganador" type="button">📲 Compartir al más chismoso</button>
+      <button class="enlace" id="btn-borrar" type="button">Borrar y empezar de nuevo</button>
+      <p class="aviso">Hecho con conteos y reglas, dentro de tu móvil. Es un juego: nadie es chismoso de verdad… o casi nadie.</p>
+    </div>
+  </section>
+</div>
+
+<div class="capa" id="capa" hidden>
+  <div class="capa-caja" role="dialog" aria-modal="true" aria-label="Compartir tarjeta">
+    <img id="capa-img" alt="Tarjeta para compartir">
+    <p>Mantén el dedo sobre la imagen para guardarla y subirla a tus historias.</p>
+    <button class="primario" id="btn-share" type="button">Compartir imagen</button>
+    <a class="boton wa" id="btn-wa" href="#" target="_blank" rel="noopener">Mandar por WhatsApp</a>
+    <button class="secundario" id="btn-copiar" type="button">Copiar el texto</button>
+    <p class="toast" id="toast" aria-live="polite"></p>
+    <button class="enlace" id="btn-cerrar" type="button">Cerrar</button>
+  </div>
+</div>
+
+<script id="motor">
+// ===== Motor: lee el chat exportado y saca las cuentas. Todo en el navegador, nada sale del móvil. =====
+const URL_APP = "https://pangea24.github.io/chismometro/"; // se pone el enlace de la web propia cuando exista (nunca el de la página privada)
+
+const quitarAcentos = s => s.normalize("NFD").replace(/[̀-ͯ]/g, "");
+const RE_AND = /^(\d{1,4})[\/.\-](\d{1,2})[\/.\-](\d{1,4}),?\s+(\d{1,2})[:.](\d{2})(?:[:.](\d{2}))?\s*([ap]\.?\s?m\.?)?\s+[-–]\s+([\s\S]*)$/i;
+const RE_IOS = /^\[(\d{1,4})[\/.\-](\d{1,2})[\/.\-](\d{1,4}),?\s+(\d{1,2})[:.](\d{2})(?:[:.](\d{2}))?\s*([ap]\.?\s?m\.?)?\]\s*([\s\S]*)$/i;
+const MARCAS = /[‎‏‪-‮⁦-⁩﻿]/g;
+
+function partirLineas(texto) {
+  const entradas = [];
+  for (let linea of texto.replace(/^﻿/, "").split(/\r?\n/)) {
+    linea = linea.replace(/[   ]/g, " ");
+    const limpia = linea.replace(/^[‎‏‪-‮⁦-⁩﻿]+/, "");
+    const m = RE_IOS.exec(limpia) || RE_AND.exec(limpia);
+    if (m) entradas.push({ a: +m[1], b: +m[2], c: +m[3], la: m[1].length, h: +m[4], mi: +m[5], s: +(m[6] || 0), ap: m[7] || "", resto: m[8] });
+    else if (entradas.length) entradas[entradas.length - 1].resto += "\n" + linea;
+  }
+  return entradas;
+}
+
+function ordenFecha(entradas) {
+  if (entradas.some(e => e.la === 4)) return "AMD";
+  if (entradas.some(e => e.a > 12)) return "DMA";
+  if (entradas.some(e => e.b > 12)) return "MDA";
+  if (entradas.some(e => /^[ap]m$/i.test(e.ap.trim()))) return "MDA"; // «PM» a secas suele ser inglés de EE. UU.
+  return "DMA";
+}
+
+const RE_MEDIA = /<multimedia omitido>|<media omitted>|<adjunto: |<attached: |\((archivo adjunto|file attached)\)|^(imagen|video|audio|sticker|gif|documento|image|document|contact card|tarjeta de contacto|nota de voz|voice message)\b.*\b(omitid[oa]|omitted)$|^[^ ]+ (omitid[oa]|omitted)$/;
+const RE_AUDIO = /audio|\.opus|ptt-|nota de voz|voice message/;
+const RE_BORRADO = /^(se elimino este mensaje|eliminaste este mensaje|este mensaje fue eliminado|this message was deleted|you deleted this message)\.?$/;
+const RE_EDITADO = /\s*<(se edito este mensaje\.?|this message was edited|editado|edited)>\s*$/i;
+const RE_TEL = /^[+\d][\d\s()\-.]{6,}$/;
+
+function leerChat(texto) {
+  const entradas = partirLineas(texto);
+  const orden = ordenFecha(entradas);
+  const mensajes = [];
+  for (const e of entradas) {
+    let dia, mes, anio;
+    if (orden === "AMD") [anio, mes, dia] = [e.a, e.b, e.c];
+    else if (orden === "MDA") [mes, dia, anio] = [e.a, e.b, e.c];
+    else [dia, mes, anio] = [e.a, e.b, e.c];
+    if (anio < 100) anio += 2000;
+    let h = e.h;
+    const ap = e.ap.toLowerCase().replace(/[.\s]/g, "");
+    if (ap === "pm" && h < 12) h += 12;
+    if (ap === "am" && h === 12) h = 0;
+    const i = e.resto.indexOf(": ");
+    if (i < 1) continue; // avisos del sistema («Ana añadió a…», «cifrado…»)
+    let quien = e.resto.slice(0, i).replace(MARCAS, "").trim();
+    if (!quien || quien.length > 60) continue;
+    const cuerpo = e.resto.slice(i + 2);
+    const marcado = /^[‎‏]/.test(cuerpo);
+    const texto2 = cuerpo.replace(MARCAS, "").replace(RE_EDITADO, "").trim();
+    const norm = quitarAcentos(texto2.toLowerCase());
+    const borrado = RE_BORRADO.test(norm);
+    const media = !borrado && RE_MEDIA.test(norm);
+    if (marcado && !borrado && !media) continue; // aviso del sistema en iPhone
+    if (RE_TEL.test(quien)) quien = "📱 …" + quien.replace(/\D/g, "").slice(-4);
+    mensajes.push({ t: new Date(anio, mes - 1, dia, h, e.mi, e.s).getTime(), h, mi: e.mi, quien, texto: texto2, norm, borrado, media, audio: media && RE_AUDIO.test(norm) });
+  }
+  return { mensajes, orden };
+}
+
+// Frases de chisme: [cómo se busca (sin tildes), cómo se enseña]
+const FRASES = [
+  ["te enteraste", "¿te enteraste?"], ["supiste", "¿supiste?"], ["no digas nada", "no digas nada"], ["no le digas", "no le digas"],
+  ["entre nos", "entre nos"], ["entre nosotras", "entre nosotras"], ["que fuerte", "qué fuerte"], ["ay no", "ay no"],
+  ["cuentame", "cuéntame"], ["chisme", "chisme"], ["chismecito", "chismecito"], ["no me digas", "no me digas"],
+  ["en serio", "¿en serio?"], ["adivina", "adivina"], ["sabias que", "¿sabías que…?"], ["dicen que", "dicen que"],
+  ["me dijeron", "me dijeron"], ["me contaron", "me contaron"], ["no lo vas a creer", "no lo vas a creer"], ["no te lo vas a creer", "no te lo vas a creer"],
+  ["que paso", "¿qué pasó?"], ["y entonces", "¿y entonces?"], ["que verguenza", "qué vergüenza"], ["fijate", "fíjate"],
+  ["imaginate", "imagínate"], ["ay dios", "ay Dios"], ["dios mio", "Dios mío"], ["tu sabes que", "tú sabes que"], ["con quien", "¿con quién?"],
+  ["did you hear", "did you hear"], ["dont tell", "don't tell"], ["don't tell", "don't tell"], ["guess what", "guess what"], ["omg", "OMG"],
+  ["oh my god", "oh my god"], ["no way", "no way"], ["spill", "spill"], ["the tea", "the tea"], ["for real", "for real"], ["i heard", "I heard"]
+].map(([buscar, ver]) => ({ ver, re: new RegExp("(^|[^a-z0-9ñ])" + buscar.replace(/[.*+?^${}()|[\]\\']/g, m => m === "'" ? "'?" : "\\" + m) + "(?=$|[^a-z0-9ñ])", "g") }));
+const EMOJIS_CHISME = ["👀", "🤭", "🫢", "😱", "☕", "🍿", "🙊"];
+const RE_EMOJI = /\p{Extended_Pictographic}/gu;
+const RE_OK = /^(ok+|okay|oki+|okis|okey|vale|va|si+|sip|ya|aja|ja+|(ja)+j?|(je)+j?|(ji)+j?|(ha)+h?|lol|xd+|k+|dale|bueno|nice|cool|yes|yeah|yep|sure|👍+|😂+|🤣+|jaja+ si|ok gracias|ok dale)[.!]*$/u;
+
+function analizar(mensajes) {
+  const gente = new Map();
+  const persona = q => {
+    if (!gente.has(q)) gente.set(q, { nombre: q, msgs: 0, textos: 0, palabras: 0, maxPalabras: 0, noche: 0, trasnoche: -1, emojis: 0, mapaEmoji: {}, preguntas: 0, chisme: 0, frases: {}, oks: 0, mapaOk: {}, media: 0, audios: 0, borrados: 0, esperas: [] });
+    return gente.get(q);
+  };
+  let previo = null;
+  const conteoPais = {};
+  for (const m of mensajes) {
+    const p = persona(m.quien);
+    p.msgs++;
+    if (previo && previo.quien !== m.quien) {
+      const espera = (m.t - previo.t) / 1000;
+      if (espera >= 0 && espera < 86400) p.esperas.push(espera);
+    }
+    previo = m;
+    if (m.h < 6) {
+      p.noche++;
+      const min = m.h * 60 + m.mi;
+      if (min > p.trasnoche) p.trasnoche = min;
+    }
+    if (m.borrado) { p.borrados++; continue; }
+    if (m.media) { p.media++; if (m.audio) p.audios++; continue; }
+    p.textos++;
+    const palabras = m.norm.split(/\s+/).filter(Boolean).length;
+    p.palabras += palabras;
+    if (palabras > p.maxPalabras) p.maxPalabras = palabras;
+    for (const e of m.texto.match(RE_EMOJI) || []) { p.emojis++; p.mapaEmoji[e] = (p.mapaEmoji[e] || 0) + 1; if (EMOJIS_CHISME.includes(e)) { p.chisme++; p.frases[e] = (p.frases[e] || 0) + 1; } }
+    p.preguntas += (m.texto.match(/\?/g) || []).length;
+    for (const f of FRASES) {
+      f.re.lastIndex = 0;
+      const n = (m.norm.match(f.re) || []).length;
+      if (n) { p.chisme += n; p.frases[f.ver] = (p.frases[f.ver] || 0) + n; }
+    }
+    for (const pa of PAISES) { pa.re.lastIndex = 0; const n = (m.norm.match(pa.re) || []).length; if (n) conteoPais[pa.id] = (conteoPais[pa.id] || 0) + n; }
+    const corto = m.norm.trim();
+    if (RE_OK.test(corto)) { p.oks++; const clave = /^(ja|je|ji|ha)/.test(corto) ? "jaja" : corto.replace(/[.!]+$/, ""); p.mapaOk[clave] = (p.mapaOk[clave] || 0) + 1; }
+  }
+  const lista = [...gente.values()];
+  for (const p of lista) {
+    p.puntos = Math.round(p.chisme * 10 + p.msgs + p.preguntas * 2 + p.noche * 2 + p.emojis * 0.5 + p.audios * 3);
+    p.medEspera = mediana(p.esperas);
+    p.media_palabras = p.textos ? p.palabras / p.textos : 0;
+    p.pc = p.chisme * 10 + p.preguntas * 2 + p.msgs * 0.5;
+  }
+  // Nivel de chisme 0–100: 60 % comparado con el más chismoso del grupo, 40 % por lo chismoso de cada mensaje
+  const maxPC = Math.max(1, ...lista.map(p => p.pc));
+  for (const p of lista) {
+    const porMensaje = (p.chisme + p.preguntas * 0.3) / Math.max(p.textos, 1);
+    p.nivel = Math.max(1, Math.min(100, Math.round(100 * (0.6 * Math.sqrt(p.pc / maxPC) + 0.4 * (1 - Math.exp(-4 * porMensaje))))));
+    p.rango = rangoDe(p.nivel);
+  }
+  const paises = Object.entries(conteoPais).sort((a, b) => b[1] - a[1]);
+  const pais = paises.length && paises[0][1] >= 3 && paises[0][1] >= 1.5 * ((paises[1] || [0, 0])[1]) ? PAISES.find(x => x.id === paises[0][0]) : null;
+  const t0 = mensajes.length ? mensajes[0].t : 0, t1 = mensajes.length ? mensajes[mensajes.length - 1].t : 0;
+  return { gente: lista, total: mensajes.length, desde: t0, hasta: t1, pais };
+}
+
+function mediana(v) {
+  if (!v.length) return null;
+  const s = [...v].sort((a, b) => a - b), k = s.length >> 1;
+  return s.length % 2 ? s[k] : (s[k - 1] + s[k]) / 2;
+}
+const maxPor = (lista, f, filtro = () => true) => lista.filter(filtro).reduce((mejor, p) => (mejor === null || f(p) > f(mejor) ? p : mejor), null);
+const masVeces = obj => Object.entries(obj).sort((a, b) => b[1] - a[1])[0] || null;
+
+function duracion(s) {
+  if (s < 1) return "al instante";
+  if (s < 60) return Math.round(s) + " s";
+  const m = Math.round(s / 60);
+  if (m < 60) return m + " min";
+  const h = Math.floor(m / 60), r = m % 60;
+  if (h < 24) return r ? `${h} h ${r} min` : `${h} h`;
+  return "más de un día";
+}
+function hora12(min) {
+  const h = Math.floor(min / 60), m = String(min % 60).padStart(2, "0");
+  const h12 = h % 12 || 12;
+  return `${h12}:${m} ${h < 12 ? "a. m." : "p. m."}`;
+}
+function hashTexto(s) { let h = 7; for (const c of s) h = (h * 31 + c.codePointAt(0)) >>> 0; return h; }
+const elegir = (lista, semilla) => lista[hashTexto(semilla) % lista.length];
+const plural = (n, uno, varios) => `${n.toLocaleString("es")} ${n === 1 ? uno : varios}`;
+
+const BROMAS = {
+  chisme: ["Si pasó algo, se enteró antes que tú.", "Tiene más fuentes que un periódico.", "No cuenta chismes: da noticias de última hora.", "«No digas nada»… y lo sabe medio barrio.", "Su frase favorita empieza con «¿ya supiste…?»."],
+  buho: ["Mientras todos duermen, sigue en línea.", "Escribe cuando el gallo todavía no ha cantado.", "Los mejores mensajes llegan a las 3 a. m.", "Su cama le manda saludos."],
+  rapido: ["Contesta antes de que termines de escribir.", "Tiene el dedo pegado a la pantalla.", "Más rápido que el delivery.", "No deja ni que se marquen las palomitas."],
+  visto: ["Te lee, lo piensa… y vuelve mañana.", "Sus palomitas azules dan miedo.", "Contesta cuando se acuerda. O cuando hay chisme.", "Experto en el arte de dejar en visto."],
+  novela: ["Le preguntas «¿bien?» y te manda tres párrafos.", "Cada mensaje suyo trae capítulos.", "Si escribe, ve por un cafecito.", "Tiene una novela y no lo sabe."],
+  ok: ["Domina el arte de decir mucho con un «ok».", "Ahorra letras como si costaran.", "Conversación profunda: «jaja», «ok», «ya».", "Responde en modo ahorro de batería."],
+  emoji: ["No escribe: se expresa en dibujitos.", "Su teclado está en modo carnaval.", "Un mensaje sin emoji le parece triste.", "Habla el idioma universal de las caritas."],
+  audio: ["¿Escribir? Para eso existen los audios de 4 minutos.", "Tiene un pódcast y no lo sabe.", "Su pulgar vive en el micrófono."],
+  media: ["Una foto vale más que mil chismes.", "Si no hay prueba, no pasó. Y siempre manda la prueba."]
+};
+// Rangos como los niveles de picante: nombres que se entienden en cualquier país
+const RANGOS = [
+  { min: 90, nombre: "Vieja chismosa suprema", chiles: 5, frase: "Bastón en mano y la oreja pegada a la pared.", abuela: true },
+  { min: 75, nombre: "Noticiero de las ocho", chiles: 4, frase: "Tiene la exclusiva antes que la tele." },
+  { min: 55, nombre: "Periodista del barrio", chiles: 3, frase: "Si pasa algo en la cuadra, lo reporta." },
+  { min: 35, nombre: "Vecina de ventana", chiles: 2, frase: "Cortina movida y ojo atento." },
+  { min: 15, nombre: "Oreja curiosa", chiles: 1, frase: "No pregunta, pero lo escucha todo." },
+  { min: 0, nombre: "Tumba sellada", chiles: 0, frase: "No suelta prenda ni bajo tortura." }
+];
+const rangoDe = n => RANGOS.find(r => n >= r.min);
+const chiles = r => (r.chiles ? "🌶️".repeat(r.chiles) : "🧊");
+// Cómo se le dice a la chismosa en cada país (personajes de barrio, nunca personas reales). Se elige por las palabras del chat.
+const PAISES = [
+  { id: "do", bandera: "🇩🇴", apodo: "radio bemba del colmado", palabras: ["vaina", "klk", "tiguere", "jevi", "jeva", "que lo que", "diache", "colmado", "guagua", "mangu", "tato"] },
+  { id: "mx", bandera: "🇲🇽", apodo: "la comadre del mercado", palabras: ["guey", "wey", "neta", "chido", "orale", "no manches", "padrisimo", "cuate"] },
+  { id: "ar", bandera: "🇦🇷", apodo: "la vecina del balcón", palabras: ["che", "boludo", "boluda", "quilombo", "posta", "laburo", "bondi", "pibe", "piba"] },
+  { id: "co", bandera: "🇨🇴", apodo: "la chismosa de la cuadra", palabras: ["parce", "parcero", "bacano", "chimba", "berraco", "berraca", "que pena con usted"] },
+  { id: "es", bandera: "🇪🇸", apodo: "la portera de la escalera", palabras: ["mola", "flipo", "flipas", "flipar", "guay", "hostia", "mogollon", "curro", "chaval", "vosotros"] },
+  { id: "ec", bandera: "🇪🇨", apodo: "la vecina de la tienda de la esquina", palabras: ["nano", "chuta", "achachay", "de ley", "mijin", "chiro", "ahi nos vidrios"] },
+  { id: "pe", bandera: "🇵🇪", apodo: "la vecina del quiosco", palabras: ["jato", "chibolo", "chibola", "causa", "pucha", "chela", "jerma"] },
+  { id: "cl", bandera: "🇨🇱", apodo: "la vecina del pasaje", palabras: ["weon", "weona", "cachai", "fome", "al tiro", "pololo", "polola", "carrete"] },
+  { id: "ve", bandera: "🇻🇪", apodo: "radio bemba del edificio", palabras: ["chamo", "chama", "burda", "arrecho", "arrecha", "vergacion"] }
+].map(p => ({ ...p, re: new RegExp("(^|[^a-z0-9])(" + p.palabras.join("|") + ")(?=$|[^a-z0-9])", "g") }));
+// La vieja chismosa: dibujo propio hecho con código
+const ABUELA_SVG = `<svg viewBox="0 0 200 250" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+<path d="M164 112 Q164 92 146 92" stroke="#7a4a2a" stroke-width="9" fill="none" stroke-linecap="round"/><path d="M164 112 L164 244" stroke="#7a4a2a" stroke-width="9" stroke-linecap="round"/>
+<path d="M52 246 Q54 150 100 138 Q146 150 148 246 Z" fill="#7b5cd6"/>
+<path d="M50 178 Q100 124 150 178 L138 196 Q100 162 62 196 Z" fill="#ff8a3d"/><circle cx="100" cy="186" r="7" fill="#ffe14d"/>
+<path d="M140 168 Q162 156 162 140" stroke="#7b5cd6" stroke-width="16" fill="none" stroke-linecap="round"/><circle cx="163" cy="138" r="10" fill="#f2c4a0"/>
+<path d="M62 168 Q40 140 48 104" stroke="#7b5cd6" stroke-width="16" fill="none" stroke-linecap="round"/>
+<circle cx="100" cy="98" r="38" fill="#f2c4a0"/>
+<ellipse cx="54" cy="98" rx="13" ry="17" fill="#f2c4a0"/><path d="M47 88 Q42 98 48 108" stroke="#d9a07c" stroke-width="3" fill="none"/>
+<path d="M62 96 Q62 56 100 58 Q138 56 138 96 Q124 74 100 76 Q76 74 62 96Z" fill="#e8e4ef"/>
+<circle cx="100" cy="46" r="17" fill="#e8e4ef"/><circle cx="72" cy="70" r="8" fill="#d9d4e3"/><circle cx="128" cy="70" r="8" fill="#d9d4e3"/><circle cx="100" cy="62" r="7" fill="#d9d4e3"/>
+<circle cx="84" cy="100" r="11" fill="#fff" fill-opacity=".55" stroke="#1a0b2e" stroke-width="3"/><circle cx="116" cy="100" r="11" fill="#fff" fill-opacity=".55" stroke="#1a0b2e" stroke-width="3"/><path d="M95 100 L105 100" stroke="#1a0b2e" stroke-width="3"/>
+<circle cx="80" cy="101" r="3.5" fill="#1a0b2e"/><circle cx="112" cy="101" r="3.5" fill="#1a0b2e"/>
+<path d="M75 86 L91 89 M109 89 L125 86" stroke="#1a0b2e" stroke-width="3" stroke-linecap="round"/>
+<circle cx="76" cy="118" r="7" fill="#ff8fb1" fill-opacity=".7"/><circle cx="124" cy="118" r="7" fill="#ff8fb1" fill-opacity=".7"/>
+<path d="M90 124 Q102 130 112 120" stroke="#1a0b2e" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+</svg>`;
+
+const TEMAS = {
+  portada: { bg: "#ffe14d", fg: "#1a0b2e", ac: "#ff3d8b" },
+  chisme: { bg: "#ff3d8b", fg: "#1a0b2e", ac: "#ffe14d" },
+  buho: { bg: "#2b2d7a", fg: "#fff3f8", ac: "#ffe14d" },
+  rapido: { bg: "#ffe14d", fg: "#1a0b2e", ac: "#3ee6b0" },
+  visto: { bg: "#3ee6b0", fg: "#1a0b2e", ac: "#2b2d7a" },
+  novela: { bg: "#ff8a3d", fg: "#1a0b2e", ac: "#fff3f8" },
+  ok: { bg: "#b9a4ff", fg: "#1a0b2e", ac: "#ff3d8b" },
+  emoji: { bg: "#ffe14d", fg: "#1a0b2e", ac: "#ff8a3d" },
+  audio: { bg: "#17a398", fg: "#fff3f8", ac: "#ffe14d" },
+  rank: { bg: "#3a1f5e", fg: "#fff3f8", ac: "#ff3d8b" }
+};
+
+function hacerTarjetas(res, nombreChat) {
+  const g = res.gente;
+  const T = [];
+  const fecha = t => new Date(t).toLocaleDateString("es", { day: "numeric", month: "short", year: "numeric" });
+  T.push({ tipo: "portada", pegatina: "📰", kicker: "Informe del chisme", nombre: nombreChat, cifras: [[res.total.toLocaleString("es"), "mensajes"], [g.length, g.length === 1 ? "persona" : "personas"], [Math.max(1, Math.round((res.hasta - res.desde) / 864e5)).toLocaleString("es"), "días"]], dato: `Del ${fecha(res.desde)} al ${fecha(res.hasta)}.`, broma: "Leído entero aquí mismo. Que empiece el chisme." });
+
+  const ch = maxPor(g, p => p.nivel * 1000 + p.pc);
+  if (ch) {
+    const palabras = Object.fromEntries(Object.entries(ch.frases).filter(([k]) => !EMOJIS_CHISME.includes(k)));
+    const f = masVeces(palabras) || masVeces(ch.frases);
+    T.push({ tipo: "chisme", pegatina: "🗣️", kicker: "El más chismoso", nombre: ch.nombre, nivel: ch.nivel, rango: ch.rango, dato: f ? `Dijo «${f[0]}» ${plural(f[1], "vez", "veces")} y soltó ${plural(ch.preguntas, "pregunta", "preguntas")}.` : `${plural(ch.preguntas, "pregunta", "preguntas")}: todo lo quiere saber.`, pais: res.pais ? `${res.pais.bandera} Por tu tierra le dicen «${res.pais.apodo}».` : "", broma: ch.rango.frase });
+  }
+  const bu = maxPor(g, p => p.noche, p => p.noche > 0);
+  if (bu) T.push({ tipo: "buho", pegatina: "🦉", kicker: "El búho", nombre: bu.nombre, cifra: [bu.noche, bu.noche === 1 ? "mensaje de madrugada" : "mensajes de madrugada"], dato: `Su mensaje más trasnochado: a las ${hora12(bu.trasnoche)}`, broma: elegir(BROMAS.buho, bu.nombre) });
+
+  const conEsperas = g.filter(p => p.esperas.length >= 3);
+  if (conEsperas.length >= 2) {
+    const rap = conEsperas.reduce((a, b) => (b.medEspera < a.medEspera ? b : a));
+    const len = conEsperas.reduce((a, b) => (b.medEspera > a.medEspera ? b : a));
+    T.push({ tipo: "rapido", pegatina: "⚡", kicker: "El más rápido contestando", nombre: rap.nombre, cifra: [duracion(rap.medEspera), "de media"], dato: `Contestó ${plural(rap.esperas.length, "vez", "veces")} y casi siempre volando.`, broma: elegir(BROMAS.rapido, rap.nombre) });
+    if (len !== rap) T.push({ tipo: "visto", pegatina: "🐢", kicker: "El que te deja en visto", nombre: len.nombre, cifra: [duracion(len.medEspera), "para contestar"], dato: "Es lo que tarda de media en responder.", broma: elegir(BROMAS.visto, len.nombre) });
+  }
+  const nov = maxPor(g, p => p.media_palabras, p => p.textos >= 5);
+  if (nov && nov.media_palabras >= 6) T.push({ tipo: "novela", pegatina: "📜", kicker: "El novelista", nombre: nov.nombre, cifra: [Math.round(nov.media_palabras), "palabras por mensaje"], dato: `Su mensaje más largo: ${plural(nov.maxPalabras, "palabra", "palabras")}.`, broma: elegir(BROMAS.novela, nov.nombre) });
+
+  const okr = maxPor(g, p => p.oks / p.textos, p => p.textos >= 8 && p.oks >= 3 && p !== nov);
+  if (okr) { const f = masVeces(okr.mapaOk); T.push({ tipo: "ok", pegatina: "🤐", kicker: "El de «ok» y «jaja»", nombre: okr.nombre, cifra: [Math.round(okr.oks / okr.textos * 100) + " %", "de sus mensajes"], dato: `Son «ok», «jaja» y compañía. Su favorito: «${f[0]}» (${plural(f[1], "vez", "veces")}).`, broma: elegir(BROMAS.ok, okr.nombre) }); }
+
+  const em = maxPor(g, p => p.emojis, p => p.emojis > 0);
+  if (em) { const f = masVeces(em.mapaEmoji); T.push({ tipo: "emoji", pegatina: "😂", kicker: "El rey de los emojis", nombre: em.nombre, cifra: [em.emojis, "emojis"], dato: `Su favorito: ${f[0]} (${plural(f[1], "vez", "veces")}).`, broma: elegir(BROMAS.emoji, em.nombre) }); }
+
+  const au = maxPor(g, p => p.audios, p => p.audios > 0);
+  if (au) T.push({ tipo: "audio", pegatina: "🎙️", kicker: "El rey de los audios", nombre: au.nombre, cifra: [au.audios, au.audios === 1 ? "audio" : "audios"], dato: "Cuando escribir se queda corto.", broma: elegir(BROMAS.audio, au.nombre) });
+  else {
+    const me = maxPor(g, p => p.media, p => p.media > 0);
+    if (me) T.push({ tipo: "audio", pegatina: "📸", kicker: "Manda de todo", nombre: me.nombre, cifra: [me.media, "fotos, audios y stickers"], dato: "Es quien más archivos manda al chat.", broma: elegir(BROMAS.media, me.nombre) });
+  }
+
+  const orden = [...g].sort((a, b) => b.nivel - a.nivel || b.pc - a.pc).slice(0, 10);
+  T.push({ tipo: "rank", pegatina: "🏆", kicker: "El chismómetro del grupo", lista: orden.map(p => ({ nombre: p.nombre, nivel: p.nivel, rango: p.rango })) });
+  return T;
+}
+
+function nombreDeArchivo(nombre) {
+  let n = (nombre || "").replace(/\.(txt|zip)$/i, "").replace(/^(WhatsApp Chat( with| -)?|Chat de WhatsApp con|Conversación de WhatsApp con|Chat de WhatsApp -)\s*/i, "").replace(/^[-\s]+/, "").trim();
+  if (!n || /^_?chat$/i.test(n)) n = "Tu chat";
+  return n;
+}
+
+// Lector de .zip sin librerías (WhatsApp lo comprime con «deflate», que el navegador ya sabe abrir)
+async function abrirZip(buffer) {
+  const v = new DataView(buffer), u8 = new Uint8Array(buffer);
+  let fin = -1;
+  for (let i = u8.length - 22; i >= Math.max(0, u8.length - 66000); i--) if (v.getUint32(i, true) === 0x06054b50) { fin = i; break; }
+  if (fin < 0) throw new Error("zip");
+  const total = v.getUint16(fin + 10, true);
+  let p = v.getUint32(fin + 16, true);
+  const archivos = [];
+  for (let k = 0; k < total; k++) {
+    if (v.getUint32(p, true) !== 0x02014b50) break;
+    const metodo = v.getUint16(p + 10, true), comp = v.getUint32(p + 20, true);
+    const ln = v.getUint16(p + 28, true), lx = v.getUint16(p + 30, true), lc = v.getUint16(p + 32, true), local = v.getUint32(p + 42, true);
+    archivos.push({ nombre: new TextDecoder().decode(u8.subarray(p + 46, p + 46 + ln)), metodo, comp, local });
+    p += 46 + ln + lx + lc;
+  }
+  const txt = archivos.filter(a => /\.txt$/i.test(a.nombre) && !/__MACOSX/.test(a.nombre));
+  const elegido = txt.find(a => /_chat\.txt$|whatsapp/i.test(a.nombre)) || txt[0];
+  if (!elegido) throw new Error("sin-txt");
+  const ini = elegido.local + 30 + v.getUint16(elegido.local + 26, true) + v.getUint16(elegido.local + 28, true);
+  const datos = u8.subarray(ini, ini + elegido.comp);
+  if (elegido.metodo === 0) return { texto: new TextDecoder().decode(datos), nombre: elegido.nombre };
+  if (elegido.metodo !== 8 || typeof DecompressionStream === "undefined") throw new Error("zip-no");
+  const salida = await new Response(new Blob([datos]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).arrayBuffer();
+  return { texto: new TextDecoder().decode(salida), nombre: elegido.nombre };
+}
+
+// Chat de ejemplo inventado (formato de iPhone en español). Personas y hechos ficticios.
+function chatDeEjemplo() {
+  let semilla = 20261109;
+  const azar = () => { semilla = (semilla + 0x6D2B79F5) | 0; let t = Math.imul(semilla ^ (semilla >>> 15), 1 | semilla); t ^= t + Math.imul(t ^ (t >>> 7), 61 | t); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const uno = l => l[Math.floor(azar() * l.length)];
+  const cosas = ["la boda de la prima Rosi", "el gallo de don Chepe que se escapó otra vez", "la novela de anoche", "el vecino nuevo del segundo piso", "la peluquería nueva de la esquina", "el perro de doña Carmen que se comió unos zapatos", "la fiesta de Mabel", "el colmado que ahora fía con libreta nueva"];
+  const P = {
+    "Yari": { w: 6, espera: [30, 400], dice: () => uno([`¿Ya te enteraste de lo de ${uno(cosas)}? 👀`, `No digas nada pero ${uno(cosas)} 🤭`, `Qué fuerte lo de ${uno(cosas)} 😱`, "Cuéntame todo", `Me dijeron que lo de ${uno(cosas)} es verdad`, "¿En serio? No me digas", "Adivina a quién vi en el colmado 👀", "Entre nos, eso no se queda así", "Ay no, qué vergüenza 🫢", "¿Y entonces? ¿Qué pasó?", "¿Con quién fue? 👀"]) },
+    "Tía Nena": { w: 4, espera: [120, 1500], noche: true, dice: () => uno(["Dios me los bendiga 🙏🙏✨", "😂😂😂🤣", "Ay mi madre 😱😱", "Ay Dios, ¿y qué pasó? 👀", "¿Con quién? Cuéntame 🤭", "Buenas noches familia 🌙✨😴", "¿Quién tiene la receta del bizcocho? 🎂🎉", "Ya me voy a dormir 😴😴 (mentira)", "‎audio omitido", "‎audio omitido", "‎sticker omitido", "Miren esto 👇👇😂", "‎imagen omitida", "Feliz día mis amores 🌺💐☀️"]) },
+    "Junior": { w: 4, espera: [5400, 30000], dice: () => uno(["ok", "jaja", "jajaja", "ok", "ya", "👍", "dale", "jaja sí", "ok", "vale"]) },
+    "Mabel": { w: 3, espera: [300, 2400], dice: () => uno([
+      "Bueno les cuento lo que pasó, porque ustedes saben que yo no ando en chismes, pero el sábado fui a la boda de la prima Rosi y resulta que el DJ se equivocó de canción en el baile de los novios y puso una bachata de despecho, y la mamá de la novia casi se desmaya. Al final todo el mundo terminó bailando igual y fue lo mejor de la noche.",
+      "Yo opino que deberíamos hacer el sancocho en casa de Tía Nena porque tiene el patio más grande y la sombra de la mata de mango, y además así nadie tiene que manejar tan lejos, y cada uno trae algo: yo llevo el arroz, Frank el hielo y Junior que traiga los vasos, que siempre se le olvidan.",
+      "Ayer me pasó algo increíble en la guagua: se montó un señor con un gallo debajo del brazo, y el gallo empezó a cantar justo cuando el chofer puso merengue, y toda la guagua se puso a aplaudir como si fuera un concierto. Yo no sabía si reírme o grabarlo.",
+      "Les escribo para recordarles que el domingo es el cumpleaños de Tía Nena y que la sorpresa es a las cuatro, así que nadie le diga nada, lleguen temprano, escondan los carros detrás del colmado y por favor que nadie publique fotos antes de tiempo."]) },
+    "Frank": { w: 4, espera: [8, 70], dice: () => uno(["Jajaja tremendo", "Ahora mismo voy", "¿En serio? 👀", "¿A qué hora?", "Yo llevo el hielo 🧊", "Eso es verdad", "Ya llegué", "Diablo, ¿de verdad?", "Cuenten conmigo", "Voy saliendo"]) }
+  };
+  const nombres = Object.keys(P);
+  const lineas = [];
+  const fmt = t => { const d = new Date(t); const z = n => String(n).padStart(2, "0"); return `[${d.getDate()}/${d.getMonth() + 1}/${String(d.getFullYear()).slice(2)}, ${z(d.getHours())}:${z(d.getMinutes())}:${z(d.getSeconds())}]`; };
+  let t = new Date(2026, 9, 19, 8, 12, 0).getTime();
+  lineas.push(`${fmt(t)} Las del barrio 🌴: ‎Los mensajes y las llamadas están cifrados de extremo a extremo. Nadie fuera de este chat, ni siquiera WhatsApp, puede leerlos ni escucharlos.`);
+  let previo = "";
+  for (let i = 0; i < 340; i++) {
+    const h = new Date(t).getHours();
+    const nocturna = h < 5 || h >= 23;
+    const pesos = nombres.map(n => (n === previo ? 0 : P[n].w * (nocturna ? (P[n].noche ? 8 : 0.3) : 1)));
+    let r = azar() * pesos.reduce((a, b) => a + b), quien = nombres[0];
+    for (let k = 0; k < nombres.length; k++) { r -= pesos[k]; if (r <= 0) { quien = nombres[k]; break; } }
+    const [mn, mx] = P[quien].espera;
+    t += (mn + azar() * (mx - mn)) * 1000;
+    if (azar() < 0.05) t += 3600e3 * (2 + azar() * 6);
+    lineas.push(`${fmt(t)} ${quien}: ${P[quien].dice()}`);
+    previo = quien;
+  }
+  return lineas.join("\n");
+}
+</script>
+
+<script>
+// ===== Pantallas =====
+const $ = id => document.getElementById(id);
+let tarjetasActuales = [], chatActual = "";
+let medidorPuesto = false;
+
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+function htmlTarjeta(t) {
+  const tema = TEMAS[t.tipo];
+  const estilo = `--bg:${tema.bg};--fg:${tema.fg};--ac:${tema.ac}`;
+  const pie = `<div class="pie"><span>Chismómetro</span><span>${esc(chatActual)}</span></div>`;
+  const arriba = `<div class="t-arriba"><span class="pegatina">${t.pegatina}</span><span class="kicker">${esc(t.kicker)}</span></div>`;
+  if (t.tipo === "rank") {
+    return `<article class="tarjeta rank" style="${estilo}">${arriba}<ol class="ranking">${t.lista.map((p, i) => `<li><span class="pos">${i + 1}</span><span class="quien">${esc(p.nombre)}<small>${chiles(p.rango)} ${esc(p.rango.nombre)}</small><span class="tubo mini"><span class="relleno" style="--v:${p.nivel}%"></span></span></span><span class="pts">${p.nivel}</span></li>`).join("")}</ol><p class="dato">Nivel de chisme de 0 a 100: frases de chisme, preguntas y cuánto habla cada uno.</p>${pie}</article>`;
+  }
+  if (t.tipo === "chisme") {
+    const arribaN = `<div class="t-arriba"><span class="pegatina">${t.pegatina}</span><span class="kicker">${esc(t.kicker)}</span>${t.rango.abuela ? `<span class="abuela">${ABUELA_SVG}</span>` : ""}</div>`;
+    return `<article class="tarjeta nivel" style="${estilo}">${arribaN}<h2 class="nombre">${esc(t.nombre)}</h2><div class="medida"><p class="cifra">${t.nivel}<small>/100 de chisme</small></p><div class="termo" role="img" aria-label="${t.nivel} de 100"><span class="bulbo"></span><span class="tubo"><span class="relleno" style="--v:${t.nivel}%"></span></span></div></div><p class="rango">${chiles(t.rango)} ${esc(t.rango.nombre)}</p><p class="dato">${esc(t.dato)}</p>${t.pais ? `<p class="dato">${esc(t.pais)}</p>` : ""}<p class="broma">${esc(t.broma)}</p>${pie}</article>`;
+  }
+  if (t.tipo === "portada") {
+    return `<article class="tarjeta portadilla" style="${estilo}">${arriba}<h2 class="nombre">${esc(t.nombre)}</h2><div class="cifras3">${t.cifras.map(([n, l]) => `<div><b>${esc(n)}</b><span>${esc(l)}</span></div>`).join("")}</div><p class="dato">${esc(t.dato)}</p><p class="broma">${esc(t.broma)}</p>${pie}</article>`;
+  }
+  return `<article class="tarjeta" style="${estilo}">${arriba}<h2 class="nombre">${esc(t.nombre)}</h2><p class="cifra">${esc(typeof t.cifra[0] === "number" ? t.cifra[0].toLocaleString("es") : t.cifra[0])}<small>${esc(t.cifra[1])}</small></p><p class="dato">${esc(t.dato)}</p><p class="broma">${esc(t.broma)}</p>${pie}</article>`;
+}
+
+function mostrarInforme(texto, nombreArchivo) {
+  const { mensajes } = leerChat(texto);
+  const personas = new Set(mensajes.map(m => m.quien));
+  if (mensajes.length < 10 || personas.size < 2) throw new Error(mensajes.length ? "poco" : "formato");
+  chatActual = nombreDeArchivo(nombreArchivo);
+  const res = analizar(mensajes);
+  tarjetasActuales = hacerTarjetas(res, chatActual);
+  $("nombre-chat").textContent = chatActual;
+  $("tarjetas").innerHTML = tarjetasActuales.map((t, i) => `<div class="bloque" style="animation-delay:${i * 60}ms">${htmlTarjeta(t)}<button class="compartir" type="button" data-i="${i}">📲 Compartir esta tarjeta</button></div>`).join("");
+  $("inicio").hidden = true;
+  $("informe").hidden = false;
+  window.scrollTo(0, 0);
+}
+
+function mostrarError(msg) { $("estado").hidden = true; $("error").textContent = msg; $("error").hidden = false; }
+
+const ERRORES = {
+  formato: "No reconozco este archivo como un chat de WhatsApp. Exporta el chat desde WhatsApp (Exportar chat → Sin archivos) y elige ese archivo.",
+  poco: "Este chat tiene muy pocos mensajes o una sola persona. Prueba con una conversación más larga.",
+  zip: "No pude abrir este .zip. Prueba a descomprimirlo y elegir el archivo .txt de dentro.",
+  "zip-no": "Tu navegador no sabe abrir este .zip. Descomprímelo y elige el archivo .txt de dentro.",
+  "sin-txt": "Dentro del .zip no hay ningún chat (.txt). Exporta el chat otra vez eligiendo «Sin archivos»."
+};
+
+// Lee un chat (.txt o .zip) que viene del selector o de «Compartir» en WhatsApp
+async function procesarArchivo(buf, nombre) {
+  $("error").hidden = true;
+  $("estado").textContent = "Leyendo el chat aquí mismo…";
+  $("estado").hidden = false;
+  try {
+    const u8 = new Uint8Array(buf, 0, Math.min(4, buf.byteLength));
+    let texto;
+    if (u8[0] === 0x50 && u8[1] === 0x4b) ({ texto } = await abrirZip(buf));
+    else texto = new TextDecoder().decode(buf);
+    mostrarInforme(texto, nombre);
+    $("estado").hidden = true;
+  } catch (err) {
+    mostrarError(ERRORES[err.message] || ERRORES.formato);
+  }
+}
+$("archivo").addEventListener("change", async e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  await procesarArchivo(await f.arrayBuffer(), f.name);
+  e.target.value = ""; // el archivo no se queda en la página
+});
+
+$("btn-ejemplo").addEventListener("click", () => { $("error").hidden = true; mostrarInforme(chatDeEjemplo(), "Las del barrio 🌴.txt"); });
+function volver() {
+  tarjetasActuales = []; chatActual = "";
+  $("tarjetas").innerHTML = "";
+  $("informe").hidden = true; $("inicio").hidden = false;
+  window.scrollTo(0, 0);
+}
+$("btn-otro").addEventListener("click", volver);
+$("btn-borrar").addEventListener("click", volver);
+$("tarjetas").addEventListener("click", e => { const b = e.target.closest("[data-i]"); if (b) abrirCompartir(tarjetasActuales[+b.dataset.i]); });
+$("btn-ganador").addEventListener("click", () => abrirCompartir(tarjetasActuales.find(t => t.tipo === "chisme") || tarjetasActuales[0]));
+
+// ===== Imagen para compartir (1080×1920, para historias y WhatsApp) =====
+function encajar(ctx, texto, maxAncho, tamMax, tamMin, familia, peso = "") {
+  let tam = tamMax;
+  ctx.font = `${peso} ${tam}px ${familia}`;
+  while (tam > tamMin && ctx.measureText(texto).width > maxAncho) { tam -= 4; ctx.font = `${peso} ${tam}px ${familia}`; }
+  return tam;
+}
+function lineasDe(ctx, texto, maxAncho) {
+  const palabras = texto.split(" "), out = [];
+  let l = "";
+  for (const p of palabras) { const prueba = l ? l + " " + p : p; if (ctx.measureText(prueba).width > maxAncho && l) { out.push(l); l = p; } else l = prueba; }
+  if (l) out.push(l);
+  return out;
+}
+let abuelaImg = null;
+function cargarAbuela() {
+  if (abuelaImg) return abuelaImg;
+  abuelaImg = new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(ABUELA_SVG); });
+  return abuelaImg;
+}
+function termometro(x, X, Y, ancho, alto, v, fg) {
+  const r = alto * 0.8, x0 = X + r * 1.6, w = ancho - r * 1.6;
+  const tubo = ww => { x.beginPath(); if (x.roundRect) x.roundRect(x0, Y, ww, alto, alto / 2); else x.rect(x0, Y, ww, alto); };
+  x.fillStyle = "rgba(26,11,46,.18)"; tubo(w); x.fill();
+  const g = x.createLinearGradient(x0, 0, x0 + w, 0); g.addColorStop(0, "#3ee6b0"); g.addColorStop(0.55, "#ffe14d"); g.addColorStop(1, "#ff3d8b");
+  x.fillStyle = g; tubo(Math.max(alto, w * v / 100)); x.fill();
+  x.lineWidth = Math.max(4, alto / 8); x.strokeStyle = fg; tubo(w); x.stroke();
+  x.beginPath(); x.arc(X + r, Y + alto / 2, r, 0, Math.PI * 2); x.fillStyle = "#3ee6b0"; x.fill(); x.stroke();
+}
+async function dibujar(t) {
+  try { await Promise.all([document.fonts.load("120px Anton"), document.fonts.load("800 40px 'Bricolage Grotesque'"), document.fonts.load("600 40px 'Bricolage Grotesque'")]); } catch (e) {}
+  const tema = TEMAS[t.tipo];
+  const W = 1080, H = 1920, M = 90;
+  const c = document.createElement("canvas"); c.width = W; c.height = H;
+  const x = c.getContext("2d");
+  const DISP = "Anton, Impact, sans-serif", BODY = "'Bricolage Grotesque', system-ui, sans-serif";
+  x.fillStyle = tema.bg; x.fillRect(0, 0, W, H);
+  // rayos de revista
+  x.save(); x.translate(W - 120, 470); x.fillStyle = tema.ac; x.globalAlpha = 0.5;
+  for (let i = 0; i < 18; i++) { x.beginPath(); x.moveTo(0, 0); x.arc(0, 0, 520, (i * 2) * Math.PI / 18, (i * 2 + 1) * Math.PI / 18); x.closePath(); x.fill(); }
+  x.restore();
+  if (t.rango && t.rango.abuela) { const a = await cargarAbuela(); if (a) x.drawImage(a, W - M - 300, 130, 300, 375); }
+  x.fillStyle = tema.fg; x.textBaseline = "alphabetic";
+  const sube = t.tipo === "chisme" ? 210 : 0; // la tarjeta del nivel lleva más cosas
+  x.font = `140px ${BODY}`; x.fillText(t.pegatina, M, 470 - sube);
+  x.font = `800 44px ${BODY}`;
+  x.fillText(t.kicker.toUpperCase().split("").join(String.fromCharCode(8202)), M, 580 - sube);
+  let y = 700;
+  if (t.tipo === "rank") {
+    y = 660;
+    t.lista.slice(0, 6).forEach((p, i) => {
+      x.font = `86px ${DISP}`; x.fillText(String(i + 1), M, y + 80);
+      const tam = encajar(x, p.nombre, 600, 64, 34, BODY, "800"); x.font = `800 ${tam}px ${BODY}`; x.fillText(p.nombre, M + 110, y + 50);
+      x.font = `600 36px ${BODY}`; x.globalAlpha = 0.85; x.fillText(`${chiles(p.rango)} ${p.rango.nombre}`, M + 110, y + 100); x.globalAlpha = 1;
+      termometro(x, M + 110, y + 125, W - 2 * M - 270, 22, p.nivel, tema.fg);
+      x.fillStyle = tema.fg;
+      x.font = `86px ${DISP}`; x.textAlign = "right"; x.fillText(String(p.nivel), W - M, y + 100); x.textAlign = "left";
+      y += 178;
+    });
+  } else {
+    const nombre = (t.nombre || "").toUpperCase();
+    const tam = encajar(x, nombre, W - 2 * M, t.tipo === "chisme" ? 190 : 230, 90, DISP);
+    x.font = `${tam}px ${DISP}`;
+    const ls = lineasDe(x, nombre, W - 2 * M).slice(0, 3);
+    y = 900 - sube;
+    for (const l of ls) { x.fillText(l, M, y); y += tam * 0.98; }
+    y += 40;
+    if (t.tipo === "chisme") {
+      x.font = `150px ${DISP}`; x.fillText(String(t.nivel), M, y + 110);
+      const ancho = x.measureText(String(t.nivel)).width;
+      x.font = `800 50px ${BODY}`; x.fillText("/100 de chisme", M + ancho + 24, y + 105);
+      y += 150;
+      termometro(x, M, y, W - 2 * M, 54, t.nivel, tema.fg);
+      x.fillStyle = tema.fg;
+      y += 135;
+      x.font = `800 60px ${BODY}`;
+      for (const l of lineasDe(x, `${chiles(t.rango)} ${t.rango.nombre}`, W - 2 * M)) { x.fillText(l, M, y); y += 70; }
+      y += 16;
+      x.font = `600 42px ${BODY}`;
+      for (const l of lineasDe(x, [t.dato, t.pais].filter(Boolean).join(" "), W - 2 * M)) { x.fillText(l, M, y); y += 54; }
+      y += 30;
+      x.font = `800 54px ${BODY}`;
+      for (const l of lineasDe(x, t.broma, W - 2 * M)) { x.fillText(l, M, y); y += 68; }
+    } else if (t.tipo === "portada") {
+      x.font = `800 54px ${BODY}`;
+      x.fillText(t.cifras.map(([n, l]) => `${n} ${l}`).join(" · "), M, y); y += 90;
+    } else {
+      const num = typeof t.cifra[0] === "number" ? t.cifra[0].toLocaleString("es") : t.cifra[0];
+      x.font = `150px ${DISP}`; x.fillText(num, M, y + 120);
+      const ancho = x.measureText(num).width;
+      x.font = `800 48px ${BODY}`;
+      const resto = lineasDe(x, t.cifra[1], W - 2 * M - ancho - 30);
+      resto.slice(0, 2).forEach((l, i) => x.fillText(l, M + ancho + 30, y + 70 + i * 56));
+      y += 220;
+    }
+    x.font = `600 50px ${BODY}`;
+    for (const l of lineasDe(x, t.dato, W - 2 * M)) { x.fillText(l, M, y); y += 64; }
+    y += 40;
+    x.font = `800 58px ${BODY}`;
+    for (const l of lineasDe(x, t.broma, W - 2 * M)) { x.fillText(l, M, y); y += 72; }
+  }
+  x.font = `800 38px ${BODY}`; x.globalAlpha = 0.85;
+  x.fillText("CHISMÓMETRO", M, H - 190);
+  x.font = `600 34px ${BODY}`;
+  x.fillText("¿Quién es el más chismoso de tu grupo?", M, H - 140);
+  x.globalAlpha = 1;
+  return c;
+}
+
+let archivoCompartir = null;
+function textoCompartir(t) {
+  const quien = t.tipo === "rank" ? t.lista[0].nombre : t.nombre;
+  const base = t.tipo === "portada" ? `📰 Pasé «${chatActual}» por el Chismómetro 👀` : t.tipo === "rank" ? `🏆 En «${chatActual}» manda ${quien}: ${t.lista[0].nivel}/100 de chisme 👀` : t.tipo === "chisme" ? `🗣️ El más chismoso de «${chatActual}»: ${quien}, con ${t.nivel}/100. Rango: ${t.rango.nombre} ${chiles(t.rango)}` : `${t.pegatina} ${t.kicker} de «${chatActual}»: ${quien} 😂`;
+  return base + "\n¿Quién es el más chismoso de tu grupo?" + (URL_APP ? "\n" + URL_APP : "");
+}
+async function abrirCompartir(t) {
+  if (!t) return;
+  $("toast").textContent = "";
+  $("capa").hidden = false;
+  $("capa-img").removeAttribute("src");
+  const texto = textoCompartir(t);
+  $("btn-wa").href = "https://wa.me/?text=" + encodeURIComponent(texto);
+  $("btn-copiar").onclick = async () => {
+    try { await navigator.clipboard.writeText(texto); $("toast").textContent = "Texto copiado."; }
+    catch (e) { $("toast").textContent = texto; }
+  };
+  const c = await dibujar(t);
+  const blob = await new Promise(r => c.toBlob(r, "image/png"));
+  const src = URL.createObjectURL(blob);
+  $("capa-img").src = src;
+  archivoCompartir = new File([blob], "chismometro.png", { type: "image/png" });
+  $("btn-share").onclick = async () => {
+    try {
+      if (navigator.canShare && navigator.canShare({ files: [archivoCompartir] })) await navigator.share({ files: [archivoCompartir], text: texto });
+      else if (navigator.share) await navigator.share({ text: texto });
+      else throw new Error("no");
+    } catch (e) {
+      if (e && e.name === "AbortError") return;
+      $("toast").textContent = "Aquí no se puede compartir directo: mantén el dedo sobre la imagen para guardarla.";
+    }
+  };
+}
+$("btn-cerrar").addEventListener("click", () => { $("capa").hidden = true; });
+$("capa").addEventListener("click", e => { if (e.target.id === "capa") $("capa").hidden = true; });
+document.addEventListener("keydown", e => { if (e.key === "Escape") $("capa").hidden = true; });
+
+// Muestra en la portada: tarjeta del ganador del chat inventado y la aguja al rojo
+(function () {
+  try {
+    const { mensajes } = leerChat(chatDeEjemplo());
+    chatActual = "Las del barrio 🌴";
+    const t = hacerTarjetas(analizar(mensajes), chatActual).find(t => t.tipo === "chisme");
+    $("muestra").innerHTML = htmlTarjeta(t);
+    chatActual = "";
+  } catch (e) {}
+  requestAnimationFrame(() => setTimeout(() => { $("aguja").style.transform = "rotate(62deg)"; }, 250));
+  if (location.hash === "#ejemplo") $("btn-ejemplo").click(); // enlace directo al informe de ejemplo
+})();
+</script>
+
+<script>
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+(async () => {
+  if (!new URLSearchParams(location.search).has("compartido") || !("caches" in window)) return;
+  history.replaceState(null, "", location.pathname);
+  try {
+    const c = await caches.open("compartido");
+    const r = await c.match("chat");
+    const buf = r ? await r.arrayBuffer() : null;
+    const nombre = r ? decodeURIComponent(r.headers.get("x-nombre") || "chat.txt") : "";
+    await caches.delete("compartido"); // el chat no se queda guardado
+    if (buf) procesarArchivo(buf, nombre);
+    else mostrarError("No llegó el chat. Vuelve a WhatsApp, exporta el chat «Sin archivos» y elige Chismómetro.");
+  } catch (e) {}
+})();
+let avisoInstalar = null;
+window.addEventListener("beforeinstallprompt", e => {
+  e.preventDefault(); avisoInstalar = e;
+  if (document.getElementById("btn-instalar")) return;
+  const b = document.createElement("button");
+  b.id = "btn-instalar"; b.type = "button"; b.className = "secundario";
+  b.innerHTML = "📲 Instalar: sale en «Compartir» de WhatsApp";
+  b.onclick = async () => { avisoInstalar.prompt(); await avisoInstalar.userChoice; b.remove(); };
+  document.querySelector("#inicio .acciones").appendChild(b);
+});
+</script>
+</body>
+</html>
