@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Chismómetro</title>
-<meta name="description" content="Elige un chat exportado de WhatsApp y descubre quién es el más chismoso del grupo. Se lee solo en tu móvil: no se sube nada.">
-<meta property="og:title" content="Chismómetro: ¿quién es el más chismoso del grupo?">
-<meta property="og:description" content="Se lee solo en tu móvil. No se sube nada.">
+<meta name="description" content="Test de 1 minuto con situaciones del día a día: descubre tu nivel de chisme y compáralo con tu grupo de WhatsApp. No lee tus chats.">
+<meta property="og:title" content="Chismómetro: ¿qué tan chismoso eres?">
+<meta property="og:description" content="Haz el test y entra en el ranking de tu grupo.">
 <meta name="theme-color" content="#1a0b2e">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icono-192.png">
@@ -115,6 +115,27 @@ details h3{font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:v
 .rango{font-weight:800;font-size:1.15rem;line-height:1.25}
 .final{display:flex;flex-direction:column;gap:12px}
 
+/* Test del día */
+.aviso.izq{text-align:left;margin:0 0 12px}
+#modo-chat .acciones{margin-bottom:14px}
+.racha{text-align:center;font-weight:800;color:var(--limon)}
+.grupo-aviso{background:var(--tinta-2);border:2px solid var(--limon);border-radius:18px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.grupo-aviso strong{font-size:1.1rem}
+.grupo-aviso span{color:var(--gris);font-size:.95rem}
+.mini-rank{margin:0;padding-left:24px;display:flex;flex-direction:column;gap:2px;font-weight:600}
+.mini-rank b{font-family:var(--display);font-weight:400;color:var(--limon);margin-left:6px}
+.pregunta{background:var(--limon);color:var(--tinta);border-radius:24px;padding:22px;display:flex;flex-direction:column;gap:16px}
+.pregunta .pegatina{font-size:3rem}
+.pregunta h2{font-size:1.45rem;font-weight:800;line-height:1.2}
+.opciones{display:flex;flex-direction:column;gap:10px}
+.opciones button{background:var(--papel);color:var(--tinta);border-radius:16px;padding:14px 16px;font-size:1rem;font-weight:600;text-align:left;justify-content:flex-start;box-shadow:0 4px 0 rgba(26,11,46,.25)}
+.opciones button:active,.opciones button.elegida{background:var(--rosa);color:#fff;transform:translateY(2px);box-shadow:0 2px 0 rgba(26,11,46,.25)}
+.nombre-caja{display:flex;flex-direction:column;gap:6px}
+.nombre-caja label{font-weight:800}
+.nombre-caja input{font:inherit;font-size:1.1rem;font-weight:600;padding:14px 16px;border-radius:14px;border:2px solid var(--tinta-3);background:var(--tinta-2);color:var(--papel);width:100%;box-sizing:border-box}
+.nombre-caja input:focus{outline:3px solid var(--limon);outline-offset:2px}
+.yo{color:var(--limon)}
+
 /* Compartir */
 .capa{position:fixed;inset:0;background:rgba(10,4,20,.88);z-index:20;display:flex;align-items:center;justify-content:center;
   padding:calc(16px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
@@ -149,24 +170,40 @@ details h3{font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:v
       <circle cx="160" cy="160" r="13" fill="#fff3f8"/><circle cx="160" cy="160" r="5" fill="#1a0b2e"/>
     </svg>
 
-    <h1 class="titular">¿Quién es el más <em>chismoso</em> del grupo?</h1>
+    <h1 class="titular">¿Qué tan <em>chismoso</em> eres tú?</h1>
 
-    <div class="promesa">
-      <span class="candado" aria-hidden="true">🔒</span>
-      <strong>Tu chat no sale de este teléfono.</strong>
-      <span>Se lee aquí mismo, no se sube a ningún sitio, no lo lee ninguna IA y se borra al cerrar.</span>
+    <div class="grupo-aviso" id="grupo-aviso" hidden>
+      <strong>👀 Tu grupo ya se está midiendo</strong>
+      <ol class="mini-rank" id="grupo-lista"></ol>
+      <span>Haz el test y entra en el ranking.</span>
     </div>
 
     <div class="acciones">
-      <label class="boton primario" for="archivo">📂 Elegir el chat exportado</label>
+      <button class="primario" id="btn-test" type="button">▶ Hacer el test del día · 1 minuto</button>
+      <p class="racha" id="racha-inicio" hidden></p>
+    </div>
+
+    <div class="promesa">
+      <span class="candado" aria-hidden="true">🔒</span>
+      <strong>No lee tus chats.</strong>
+      <span>Respondes 6 situaciones del día a día y te sale tu nivel de chisme. Cada día, situaciones nuevas.</span>
+    </div>
+
+    <div class="muestra" aria-hidden="true">
+      <span class="etiqueta">Así sale</span>
+      <div id="muestra"></div>
+    </div>
+
+    <details id="modo-chat">
+      <summary>¿Te atreves con un chat de verdad? (opcional)</summary>
+      <p class="aviso izq">Si quieres, también mide un chat exportado de WhatsApp. Se lee aquí mismo, no se sube a ningún sitio y se borra al cerrar.</p>
+    <div class="acciones">
+      <label class="boton secundario" for="archivo">📂 Elegir el chat exportado</label>
       <input id="archivo" type="file" accept=".txt,.zip,text/plain,application/zip,application/x-zip-compressed">
-      <button class="secundario" id="btn-ejemplo" type="button">Probar con un chat inventado</button>
+      <button class="secundario" id="btn-ejemplo" type="button">Ver un chat inventado</button>
       <p id="estado" class="cargando" hidden></p>
       <p id="error" class="error" role="alert" hidden></p>
     </div>
-
-    <details>
-      <summary>¿Cómo saco el chat de WhatsApp?</summary>
       <h3>Android</h3>
       <ol>
         <li>Abre el chat o el grupo.</li>
@@ -181,14 +218,33 @@ details h3{font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:v
         <li>Toca <b>Guardar en Archivos</b>.</li>
         <li>Vuelve aquí y elige ese archivo (.zip o .txt).</li>
       </ol>
+      <p class="aviso izq">Usa solo chats en los que estás tú y para reír con tu gente. No se guarda nada.</p>
     </details>
+  </section>
 
-    <p class="aviso">Usa solo chats en los que estás tú y para reír con tu gente. No se guarda nada.</p>
-
-    <div class="muestra" aria-hidden="true">
-      <span class="etiqueta">Así sale (chat inventado)</span>
-      <div id="muestra"></div>
+  <section id="test" class="app" aria-label="Test" hidden>
+    <div class="barra">
+      <button class="secundario" id="btn-salir" type="button">← Salir</button>
+      <span class="chat" id="test-paso"></span>
     </div>
+    <div class="termo" aria-hidden="true"><span class="bulbo"></span><span class="tubo"><span class="relleno" id="test-barra" style="--v:0%"></span></span></div>
+    <article class="pregunta" id="pregunta" aria-live="polite"></article>
+  </section>
+
+  <section id="resultado" class="app" aria-label="Tu resultado" hidden>
+    <div id="res-tarjeta"></div>
+    <div class="nombre-caja">
+      <label for="tu-nombre">¿Cómo te llaman en el grupo?</label>
+      <input id="tu-nombre" type="text" maxlength="18" autocomplete="nickname" placeholder="Tu nombre o apodo">
+    </div>
+    <div class="acciones">
+      <a class="boton wa" id="btn-grupo" href="#" target="_blank" rel="noopener">💬 Mandar al grupo de WhatsApp</a>
+      <button class="secundario" id="btn-imagen" type="button">📲 Compartir como imagen</button>
+    </div>
+    <p class="aviso" id="res-explica">Cada uno que abra el enlace hace el test y se suma al ranking del grupo.</p>
+    <div id="res-grupo"></div>
+    <p class="racha" id="racha-res"></p>
+    <button class="enlace" id="btn-inicio" type="button">Volver al inicio</button>
   </section>
 
   <section id="informe" class="app" aria-label="Informe" hidden>
@@ -577,7 +633,7 @@ function htmlTarjeta(t) {
   const pie = `<div class="pie"><span>Chismómetro</span><span>${esc(chatActual)}</span></div>`;
   const arriba = `<div class="t-arriba"><span class="pegatina">${t.pegatina}</span><span class="kicker">${esc(t.kicker)}</span></div>`;
   if (t.tipo === "rank") {
-    return `<article class="tarjeta rank" style="${estilo}">${arriba}<ol class="ranking">${t.lista.map((p, i) => `<li><span class="pos">${i + 1}</span><span class="quien">${esc(p.nombre)}<small>${chiles(p.rango)} ${esc(p.rango.nombre)}</small><span class="tubo mini"><span class="relleno" style="--v:${p.nivel}%"></span></span></span><span class="pts">${p.nivel}</span></li>`).join("")}</ol><p class="dato">Nivel de chisme de 0 a 100: frases de chisme, preguntas y cuánto habla cada uno.</p>${pie}</article>`;
+    return `<article class="tarjeta rank" style="${estilo}">${arriba}<ol class="ranking">${t.lista.map((p, i) => `<li${p.yo ? ' class="yo"' : ""}><span class="pos">${i + 1}</span><span class="quien">${esc(p.nombre)}<small>${chiles(p.rango)} ${esc(p.rango.nombre)}</small><span class="tubo mini"><span class="relleno" style="--v:${p.nivel}%"></span></span></span><span class="pts">${p.nivel}</span></li>`).join("")}</ol><p class="dato">${esc(t.dato || "Nivel de chisme de 0 a 100: frases de chisme, preguntas y cuánto habla cada uno.")}</p>${pie}</article>`;
   }
   if (t.tipo === "chisme") {
     const arribaN = `<div class="t-arriba"><span class="pegatina">${t.pegatina}</span><span class="kicker">${esc(t.kicker)}</span>${t.rango.abuela ? `<span class="abuela">${ABUELA_SVG}</span>` : ""}</div>`;
@@ -603,7 +659,7 @@ function mostrarInforme(texto, nombreArchivo) {
   window.scrollTo(0, 0);
 }
 
-function mostrarError(msg) { $("estado").hidden = true; $("error").textContent = msg; $("error").hidden = false; }
+function mostrarError(msg) { $("modo-chat").open = true; $("estado").hidden = true; $("error").textContent = msg; $("error").hidden = false; }
 
 const ERRORES = {
   formato: "No reconozco este archivo como un chat de WhatsApp. Exporta el chat desde WhatsApp (Exportar chat → Sin archivos) y elige ese archivo.",
@@ -763,12 +819,12 @@ function textoCompartir(t) {
   const base = t.tipo === "portada" ? `📰 Pasé «${chatActual}» por el Chismómetro 👀` : t.tipo === "rank" ? `🏆 En «${chatActual}» manda ${quien}: ${t.lista[0].nivel}/100 de chisme 👀` : t.tipo === "chisme" ? `🗣️ El más chismoso de «${chatActual}»: ${quien}, con ${t.nivel}/100. Rango: ${t.rango.nombre} ${chiles(t.rango)}` : `${t.pegatina} ${t.kicker} de «${chatActual}»: ${quien} 😂`;
   return base + "\n¿Quién es el más chismoso de tu grupo?" + (URL_APP ? "\n" + URL_APP : "");
 }
-async function abrirCompartir(t) {
+async function abrirCompartir(t, textoPropio) {
   if (!t) return;
   $("toast").textContent = "";
   $("capa").hidden = false;
   $("capa-img").removeAttribute("src");
-  const texto = textoCompartir(t);
+  const texto = textoPropio || textoCompartir(t);
   $("btn-wa").href = "https://wa.me/?text=" + encodeURIComponent(texto);
   $("btn-copiar").onclick = async () => {
     try { await navigator.clipboard.writeText(texto); $("toast").textContent = "Texto copiado."; }
@@ -805,6 +861,161 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") $("capa").hi
   } catch (e) {}
   requestAnimationFrame(() => setTimeout(() => { $("aguja").style.transform = "rotate(62deg)"; }, 250));
   if (location.hash === "#ejemplo") $("btn-ejemplo").click(); // enlace directo al informe de ejemplo
+})();
+</script>
+
+
+<script id="test">
+// ===== Test del día: 6 situaciones de la vida diaria, sin leer ningún chat =====
+// Cada opción vale de 0 (tumba sellada) a 3 (radio bemba). El ranking del grupo viaja dentro del enlace: no hay servidor.
+const SITUACIONES = [
+  ["🛍️", "Tu vecina llega con bolsas de una tienda cara.", ["Ni me fijo", "Miro de reojo", "«¿Y eso? ¿De compras?»", "Ya calculé cuánto gastó y se lo conté a mi prima"]],
+  ["🧱", "Se oye una discusión en la casa de al lado.", ["Me pongo los audífonos", "Bajo la tele, por si acaso", "Me acerco a la pared", "Vaso pegado a la pared y libreta en mano"]],
+  ["👨‍👩‍👧", "En el grupo de la familia alguien escribe «mejor no digo nada…».", ["Lo dejo pasar", "Espero a ver si alguien pregunta", "«¿Qué pasó?» al segundo", "Le escribo por privado y luego le llamo"]],
+  ["💔", "Ves a tu ex en una foto con alguien nuevo.", ["Sigo bajando", "Miro la foto un ratito", "Entro al perfil de la persona nueva", "Ya sé dónde trabaja, su signo y cómo se llama su perro"]],
+  ["🤫", "Te cuentan un secreto: «no se lo digas a nadie».", ["Me lo llevo a la tumba", "Solo se lo cuento a mi pareja", "A mi mejor amiga, que es como si fuera yo", "Ya lo sabe medio barrio, pero yo no fui"]],
+  ["☕", "Dos compañeros del trabajo llegan por separado y sin hablarse.", ["Ni lo noto", "Lo noto y ya", "«¿Y esos dos?» en el cafecito", "Abro un grupo nuevo solo para eso"]],
+  ["🚑", "Una ambulancia para en tu calle.", ["Sigo en lo mío", "Me asomo un segundo", "Salgo a la puerta", "Ya estoy en la acera preguntando a quién se llevaron"]],
+  ["📱", "Alguien pone un estado triste en WhatsApp.", ["Le escribo para saber si está bien", "Lo veo dos veces", "Le hago captura", "Mando la captura: «¿Qué le pasará a esta?»"]],
+  ["📦", "Te dejan a ti el paquete del vecino.", ["Lo guardo y se lo doy", "Miro de qué tienda es", "Lo muevo un poquito, a ver qué suena", "Ya adiviné qué es y lo comenté"]],
+  ["🛒", "En la fila del súper, dos señoras hablan de alguien.", ["Miro el móvil", "Escucho sin querer", "Escucho queriendo", "Me meto: «¿Quién? ¿La del segundo piso?»"]],
+  ["⏳", "Tu amiga te dice «tengo algo que contarte, pero mañana».", ["Vale, mañana", "Me quedo pensando un rato", "«Dame una pista, aunque sea»", "No duermo y a las 6 ya le estoy llamando"]],
+  ["🚚", "Hay un camión de mudanza en tu edificio.", ["Ni me entero", "Pienso «¿quién se irá?»", "Pregunto a quien esté en la puerta", "Ya sé quién se va, por qué y quién llega"]],
+  ["🚪", "Alguien se sale del grupo de WhatsApp de repente.", ["No me doy cuenta", "Lo veo y ya", "«¿Qué le pasó a este?»", "Le escribo a él y luego cuento en el grupo lo que me dijo"]],
+  ["🌙", "Tu vecino llega a las 4 de la mañana.", ["Estoy dormido", "Me despierto y me vuelvo a dormir", "Miro por la ventana", "Anoto la hora y con quién llegó"]],
+  ["💍", "Te enteras de una boda a la que no te invitaron.", ["Que sean felices", "Me pica un poquito", "Veo todas las historias de la boda", "Sé el menú, el vestido y quién lloró"]],
+  ["🎉", "En una fiesta, dos personas se van juntas antes de tiempo.", ["No me fijo", "Sonrío por dentro", "Codazo a quien tenga al lado", "Ya lo puse en el grupo"]],
+  ["📞", "Alguien en tu casa habla bajito por teléfono.", ["Le doy espacio", "Bajo la música", "Paso cerca «a buscar algo»", "Por el tono ya sé con quién habla"]],
+  ["🗞️", "Te preguntan: «¿Te enteraste de lo de…?».", ["«No, y no quiero saber»", "«No, ¿qué pasó?»", "«¡Cuéntamelo todo!»", "«Sí, y te cuento la parte que no sabes»"]],
+  ["🖼️", "Ves una foto vieja de un conocido en el perfil de otra persona.", ["Like y sigo", "Leo los comentarios", "Leo las respuestas de los comentarios", "Acabo en fotos de hace diez años y le doy like sin querer"]],
+  ["🚗", "Un carro que no conoces se para frente a la casa de la vecina.", ["Ni me importa", "Miro una vez", "Muevo la cortina un poquito", "Ya me sé la placa de memoria"]]
+];
+const PREGUNTAS_TEST = 6;
+const diaDe = d => `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
+const diaDeHoy = () => diaDe(new Date());
+function azar(semilla) { let h = hashTexto(String(semilla)) || 1; return () => { h ^= h << 13; h >>>= 0; h ^= h >>> 17; h ^= h << 5; h >>>= 0; return h / 4294967296; }; }
+function barajar(lista, r) { const a = lista.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+// Las mismas situaciones para todo el que juegue ese día (o abra el enlace del grupo)
+function testDelDia(dia) {
+  const r = azar("chisme" + dia);
+  return barajar(SITUACIONES, r).slice(0, PREGUNTAS_TEST).map(([pegatina, texto, ops]) => ({ pegatina, texto, opciones: barajar(ops.map((o, v) => ({ o, v })), r) }));
+}
+const nivelDe = puntos => Math.round(100 * puntos / (PREGUNTAS_TEST * 3));
+
+// Ranking del grupo dentro del enlace: ?d=20261109&g=Yari:82,Junior:40
+const limpiarNombre = s => String(s || "").replace(/[,:\n\r]/g, " ").replace(/\s+/g, " ").trim().slice(0, 18);
+function leerGrupo(texto) {
+  if (!texto) return [];
+  return texto.split(",").map(x => { const i = x.lastIndexOf(":"); return { nombre: limpiarNombre(x.slice(0, i)), nivel: Math.min(100, Math.max(0, parseInt(x.slice(i + 1), 10) || 0)) }; })
+    .filter(p => p.nombre).slice(0, 30);
+}
+function unirGrupo(grupo, yo) {
+  const otros = grupo.filter(p => p.nombre.toLowerCase() !== yo.nombre.toLowerCase());
+  return [...otros, yo].sort((a, b) => b.nivel - a.nivel).slice(0, 30);
+}
+const textoGrupo = lista => lista.map(p => `${p.nombre}:${p.nivel}`).join(",");
+
+const guardado = {
+  leer(k) { try { return JSON.parse(localStorage.getItem("chismometro-" + k)); } catch (e) { return null; } },
+  poner(k, v) { try { localStorage.setItem("chismometro-" + k, JSON.stringify(v)); } catch (e) {} }
+};
+// Racha: días seguidos haciendo el test
+function apuntarRacha() {
+  const hoy = diaDeHoy(), r = guardado.leer("racha") || { dia: "", dias: 0 };
+  if (r.dia === hoy) return r;
+  const ayer = new Date(); ayer.setDate(ayer.getDate() - 1);
+  const nueva = { dia: hoy, dias: r.dia === diaDe(ayer) ? r.dias + 1 : 1 };
+  guardado.poner("racha", nueva);
+  return nueva;
+}
+const textoRacha = r => !r || !r.dias ? "" : r.dias === 1 ? "🔥 Primer día de racha · mañana hay situaciones nuevas" : `🔥 Racha: ${r.dias} días seguidos · mañana hay situaciones nuevas`;
+</script>
+
+<script>
+// ===== Pantallas del test =====
+const params = new URLSearchParams(location.search);
+const diaTest = /^\d{8}$/.test(params.get("d") || "") ? params.get("d") : diaDeHoy();
+const grupoEntrante = leerGrupo(params.get("g"));
+let preguntas = [], paso = 0, puntos = 0, maximas = 0, miNivel = 0;
+
+function verPantalla(id) { for (const s of ["inicio", "informe", "test", "resultado"]) $(s).hidden = s !== id; window.scrollTo(0, 0); }
+
+function pintarPregunta() {
+  const p = preguntas[paso];
+  $("test-paso").textContent = `Situación ${paso + 1} de ${preguntas.length}`;
+  $("test-barra").style.setProperty("--v", `${Math.round(100 * paso / preguntas.length)}%`);
+  $("pregunta").innerHTML = `<span class="pegatina">${p.pegatina}</span><h2>${esc(p.texto)}</h2><div class="opciones">${p.opciones.map(o => `<button type="button" data-v="${o.v}">${esc(o.o)}</button>`).join("")}</div>`;
+}
+function empezarTest() {
+  preguntas = testDelDia(diaTest); paso = 0; puntos = 0; maximas = 0;
+  verPantalla("test"); pintarPregunta();
+}
+$("pregunta").addEventListener("click", e => {
+  const b = e.target.closest("[data-v]");
+  if (!b || b.disabled) return;
+  $("pregunta").querySelectorAll("button").forEach(x => x.disabled = true);
+  b.classList.add("elegida");
+  const v = +b.dataset.v; puntos += v; if (v === 3) maximas++;
+  setTimeout(() => { paso++; if (paso < preguntas.length) pintarPregunta(); else verResultado(); }, 260);
+});
+
+function miLista() {
+  const nombre = limpiarNombre($("tu-nombre").value) || "Yo";
+  return unirGrupo(grupoEntrante, { nombre, nivel: miNivel }).map(p => ({ ...p, rango: rangoDe(p.nivel), yo: p.nombre === nombre }));
+}
+function enlaceGrupo(lista) {
+  if (!URL_APP) return "";
+  return `${URL_APP}?d=${diaTest}&g=${encodeURIComponent(textoGrupo(lista))}`;
+}
+function textoParaGrupo() {
+  const lista = miLista(), r = rangoDe(miNivel);
+  const ranking = lista.length > 1 ? "\n🏆 Ranking del grupo:\n" + lista.slice(0, 10).map((p, i) => `${i + 1}. ${p.nombre} ${p.nivel}`).join("\n") : "";
+  const enlace = enlaceGrupo(lista);
+  return `🗣️ Mi nivel de chisme: ${miNivel}/100 · ${r.nombre} ${chiles(r)}${ranking}\n¿Y tú? Haz el test (1 minuto, no lee tus chats) y entra en el ranking${enlace ? ":\n" + enlace : "."}`;
+}
+function tarjetaMia() {
+  const r = rangoDe(miNivel);
+  const nombre = limpiarNombre($("tu-nombre").value) || "Tú";
+  const dato = maximas ? `Eligió la opción más chismosa en ${maximas} de ${preguntas.length} situaciones.` : "No eligió ni una sola opción chismosa. Sospechoso.";
+  return { tipo: "chisme", pegatina: "🗣️", kicker: "Mi nivel de chisme", nombre, nivel: miNivel, rango: r, dato, pais: "", broma: r.frase };
+}
+function pintarResultado() {
+  chatActual = "Test del día";
+  $("res-tarjeta").innerHTML = htmlTarjeta(tarjetaMia());
+  const lista = miLista();
+  if (lista.length > 1) {
+    chatActual = "Ranking del grupo";
+    $("res-grupo").innerHTML = htmlTarjeta({ tipo: "rank", pegatina: "🏆", kicker: "Ranking del grupo", lista, dato: "Todos hicieron el mismo test. Pasa el enlace para que entren los que faltan." });
+  } else $("res-grupo").innerHTML = "";
+  chatActual = "";
+  $("btn-grupo").href = "https://wa.me/?text=" + encodeURIComponent(textoParaGrupo());
+}
+function verResultado() {
+  miNivel = nivelDe(puntos);
+  $("tu-nombre").value = guardado.leer("nombre") || "";
+  pintarResultado();
+  $("racha-res").textContent = textoRacha(apuntarRacha());
+  verPantalla("resultado");
+}
+$("tu-nombre").addEventListener("input", () => { guardado.poner("nombre", limpiarNombre($("tu-nombre").value)); pintarResultado(); });
+$("btn-imagen").addEventListener("click", () => {
+  const lista = miLista();
+  const t = lista.length > 1 ? { tipo: "rank", pegatina: "🏆", kicker: "Ranking del grupo", lista } : tarjetaMia();
+  abrirCompartir(t, textoParaGrupo());
+});
+$("btn-test").addEventListener("click", empezarTest);
+$("btn-salir").addEventListener("click", () => verPantalla("inicio"));
+$("btn-inicio").addEventListener("click", () => verPantalla("inicio"));
+
+// Portada: si se llega desde el enlace del grupo, se enseña quién ya jugó
+(function () {
+  if (grupoEntrante.length) {
+    $("grupo-lista").innerHTML = grupoEntrante.slice(0, 5).map(p => `<li>${esc(p.nombre)}<b>${p.nivel}</b></li>`).join("");
+    $("grupo-aviso").hidden = false;
+    $("btn-test").textContent = "▶ Hacer el test del grupo · 1 minuto";
+  }
+  const r = guardado.leer("racha");
+  if (r && r.dia === diaDeHoy()) { $("racha-inicio").textContent = textoRacha(r); $("racha-inicio").hidden = false; }
 })();
 </script>
 
